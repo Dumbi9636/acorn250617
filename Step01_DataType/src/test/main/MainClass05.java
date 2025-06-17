@@ -19,7 +19,7 @@ public class MainClass05 {
 		// name 변수를 비우기 (null은 참조 데이터 type이 담길 수 있는 빈 공간을 의미한다)
 		name=null;
 		
-		//변수안에 차조값이 들어가는게 아니고 실제 값이 들어가는 기본 데이터 type
+		//변수안에 참조값이 들어가는게 아니고 실제 값이 들어가는 기본 데이터 type
 		int num =10;
 		double num2=10.1;
 		boolean isRun=true;
