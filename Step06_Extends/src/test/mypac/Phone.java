@@ -1,7 +1,7 @@
 package test.mypac;
 // 가상의 옛날 가정용 전화기 객체를 생성할 설계도라고 가정
 public class Phone extends Object {
-
+					// Object를 상속받을거면 extends Object는 생략이 가능하다
 	//생성자
 	public Phone() {
 		System.out.println("Phone 생성자 호출됨");
@@ -11,5 +11,8 @@ public class Phone extends Object {
 	public void call() {
 		System.err.println("전화를 걸어요!");
 	}
+	
+	
+	
 	
 }

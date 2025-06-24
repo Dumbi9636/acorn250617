@@ -13,7 +13,12 @@ public class Circle extends Shape {
 	public void printArea() {
 		// 원의 넓이
 		double area = Math.PI*radius*radius;
-		System.out.println("반지름은: "+radius+" 이고 원의 넓이는: "+area);
+		System.out.println("원의 넓이는: "+area);
 	}
-
+	@Override
+	public void printInfo() {
+		super.printInfo();
+		System.out.println("반지름은 : "+radius);
+	}
 }
+ 
