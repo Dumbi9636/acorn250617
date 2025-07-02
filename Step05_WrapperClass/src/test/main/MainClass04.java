@@ -13,7 +13,7 @@ public class MainClass04 {
 		
 		Scanner scan2 = new Scanner(System.in);
 		// .print()	는 개행기호를 출력하지 않는다.
-		System.out.println("문자열 입력");
+		System.out.print("문자열 입력");
 		
 		// 콘솔에 입력한 문자열을 String type으로 얻어낸다. 
 		String str = scan2.nextLine();
