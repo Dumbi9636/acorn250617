@@ -19,6 +19,25 @@ import javax.swing.JPanel;
 import javax.swing.Timer;
 
 public class GamePanel extends JPanel{
+	Image missile2Image;           // 새로운 미사일 이미지
+	Image itemImage;               // 아이템 이미지
+	
+	int itemX = -100, itemY = -100; // 아이템 좌표 (-100이면 화면 밖)
+	boolean itemVisible = false;
+
+	long lastItemTime = 0;         // 마지막 아이템 생성 시간
+	final long ITEM_INTERVAL = 20_000; // 1분마다 아이템 등장
+
+	boolean powerMode = false;     // 파워업 활성 여부
+	long powerStartTime = 0;       // 파워업 시작 시간
+	final long POWER_DURATION = 10_000; // 10초 지속
+	
+	boolean missVisible = false;      // MISS 메시지 표시 여부
+	long missTime = 0;                // MISS 발생 시간
+	final long MISS_DISPLAY_DURATION = 1000; // 1초 표시
+	
+	// 점수를 저장할 필드
+	int score = 0; 
 	
 	//필요한 필드 정의
 	Image backImage, missImage; //monsterImage;
@@ -32,7 +51,7 @@ public class GamePanel extends JPanel{
 	int unitY=0;
 	
 	// 배경1의 y 좌표, 배경 2의 y 좌표 
-	int back1Y=0, back2Y= -800;
+	int back1Y=0, back2Y= -800;            
 	
 	// 몬스터 ArrayList 객체 
 	List<Monster> monsterList = new ArrayList<>();
@@ -53,7 +72,7 @@ public class GamePanel extends JPanel{
 	
 	//생성자
 	public GamePanel() {
-		//무언가 준비 작업 ...
+		//무언가 준비 작업 ... 
 		
 		// Panel 의 크기 설정  width:500, height:800
 		setPreferredSize(new Dimension(500, 800));
@@ -62,8 +81,12 @@ public class GamePanel extends JPanel{
 		//URL url=getClass().getResource("/images/unit1.png");
 		//unitImage = new ImageIcon(url).getImage();
 		// src/images/unit1.png 파일을 로딩해서 Image 객체로 만들기
-		// 드래곤이미지
 		
+		// 미사일 이미지 , 아이템 이미지 
+		missile2Image = new ImageIcon(getClass().getResource("/images/mi1.png")).getImage();  
+		itemImage = new ImageIcon(getClass().getResource("/images/item.png")).getImage();  
+		
+		// 드래곤이미지
 		unitImgs[0] = new ImageIcon(getClass().getResource("/images/unit1.png")).getImage(); 
 		unitImgs[1] = new ImageIcon(getClass().getResource("/images/unit2.png")).getImage(); 
 		
@@ -125,6 +148,14 @@ public class GamePanel extends JPanel{
 		        monsterList.add(new Monster(x, y));
 		        lastMonsterTime = currentTime;
 		    }
+		 // 1분마다 아이템 생성
+		    long now = System.currentTimeMillis();
+		    if (!itemVisible && now - lastItemTime > ITEM_INTERVAL) {
+		        itemX = (int)(Math.random() * 450);
+		        itemY = -50;
+		        itemVisible = true;
+		        lastItemTime = now;
+		    }
 
 		});
 		timer.start();
@@ -134,14 +165,71 @@ public class GamePanel extends JPanel{
 	@Override
 	protected void paintComponent(Graphics g) {
 		super.paintComponent(g);
+		
+		// 파워업 시간 체크 (10초 지나면 종료)
+		if (powerMode) {
+		    long elapsed = System.currentTimeMillis() - powerStartTime;
+		    if (elapsed > POWER_DURATION) {
+		        powerMode = false;
+		    }
+		}
+		
+		// 아이템 이동 및 획득 처리
+		if (itemVisible) {
+		    itemY += 5;
+		    
+		    // 유닛 충돌 감지
+		    if (itemY + 30 >= unitY - 50 && itemY <= unitY + 50 &&
+		        itemX + 30 >= unitX - 50 && itemX <= unitX + 50) {
+		        itemVisible = false;
+		        powerMode = true;
+		        powerStartTime = System.currentTimeMillis();
+		    }
+		    
+		    // 아래로 사라지면 아이템 제거
+		    if (itemY > getHeight()) {
+		        itemVisible = false;
+		    }
+
+		    // 아이템 그리기
+		    g.drawImage(itemImage, itemX, itemY, 30, 30, this);
+		}
+		
+		// 모든 몬스터의 y 좌표를 아래로 이동
+		for (Monster m : monsterList) {
+		    m.setY(m.getY() + 5); // 한 프레임당 5픽셀씩 아래로 이동
+		}
+		
+		
 		// 배경 이미지 먼저 그리기
 		g.drawImage(backImage, 0, back1Y,  500, 800, this);
 		g.drawImage(backImage, 0, back2Y, 500, 800, this);
 		// 몬스터 그리기
 		for(Monster m : monsterList) {
-		    g.drawImage(monsterImage, m.getX(), m.getY(), 50, 50, this);
+		    g.drawImage(monsterImage, m.getX(), m.getY(), 70, 70, this);
 		}
+		// 유닛 충돌 또는 화면 아래쪽 벗어났는지 확인
+		for (Monster m : monsterList) {
+		    int ex = m.getX();
+		    int ey = m.getY();
 
+		    // 몬스터가 유닛에 닿았을 경우 (단순 충돌 박스)
+		    if (ey + 50 >= unitY - 50 && ey <= unitY + 50 &&
+		        ex + 50 >= unitX - 50 && ex <= unitX + 50) {
+		        m.setRemove(true);
+		        score = Math.max(0, score - 1); // 점수 차감 (최소 0)
+		        missVisible = true; // MISS 알림 띄우기
+		        missTime = System.currentTimeMillis();
+		    }
+
+		    // 몬스터가 화면 아래로 벗어남
+		    if (ey > getHeight()) {
+		        m.setRemove(true);
+		        score = Math.max(0, score - 1);
+		        missVisible = true;
+		        missTime = System.currentTimeMillis();
+		    }
+		}
 		// 미사일-몬스터 충돌 감지 및 제거 처리
 		for(Missile missile : missList) {
 		    for(Monster monster : monsterList) {
@@ -154,14 +242,16 @@ public class GamePanel extends JPanel{
 		        if(mx >= ex && mx <= ex + 50 && my >= ey && my <= ey + 50) {
 		            missile.setRemove(true);
 		            monster.setRemove(true);
+		            score++; // 🎯 몬스터 제거 시 점수 증가!
+		        
 		        }
 		    }
 		}
 		// 반복문 돌면서 미사일 이미지 모두 그리기
-		for(int i=0; i<missList.size(); i++) {
-			//i번째 미사일객체
-			Missile tmp = missList.get(i);
-			g.drawImage(missImage, tmp.getX()-15, tmp.getY()-20, 30, 40, this);
+		for (int i = 0; i < missList.size(); i++) {
+		    Missile tmp = missList.get(i);
+		    Image currentMissileImage = powerMode ? missile2Image : missImage;
+		    g.drawImage(currentMissileImage, tmp.getX() - 15, tmp.getY() - 20, 30, 40, this);
 		}
 		//메소드의 매개변수에 전달되는 Graphics 객체를 Panel 에 그림을 그릴수 있는 도구이다
 		g.drawImage(unitImgs[unitIndex], unitX-50, unitY-50, 100, 100, this);
@@ -173,6 +263,19 @@ public class GamePanel extends JPanel{
 		// 메소드 호출할 카운트를 증가시키기
 		count++;
 		
+		// 점수 표시 (중앙, 크게)
+		g.setColor(Color.blue);
+		g.setFont(new Font("Arial", Font.BOLD, 50));
+
+		// 점수 문자열 만들기
+		String scoreText = "score: " + score;
+
+		// 텍스트 길이에 따라 중앙 정렬 계산
+		int textWidth = g.getFontMetrics().stringWidth(scoreText);
+		int x = (getWidth() - textWidth) / 2;
+		int y = 100;
+
+		g.drawString(scoreText, x, y);
 		if(count % 10 == 0 ) {
 			// 드래곤 unitIndex 1 증가
 			unitIndex++;
@@ -228,6 +331,19 @@ public class GamePanel extends JPanel{
 		    if (monsterList.get(i).isRemove()) {
 		        monsterList.remove(i);
 		        i--; // remove 했을 때 인덱스 보정
+		    }
+		}
+		// MISS 메시지 보여주기
+		if (missVisible) {
+		    long now = System.currentTimeMillis();
+		    if (now - missTime < MISS_DISPLAY_DURATION) {
+		        g.setColor(Color.red);
+		        g.setFont(new Font("Arial", Font.BOLD, 40));
+		        String missText = "MISS!";
+		        int missWidth = g.getFontMetrics().stringWidth(missText);
+		        g.drawString(missText, (getWidth() - missWidth) / 2, 160);
+		    } else {
+		        missVisible = false; // 1초 후 메시지 숨김
 		    }
 		}
 	}
