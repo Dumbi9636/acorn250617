@@ -140,7 +140,7 @@ public class GamePanel extends JPanel{
 			repaint();
 			
 			long currentTime = System.currentTimeMillis();
-			
+			            
 			  // 0.5초마다 몬스터 1마리 생성
 		    if (currentTime - lastMonsterTime > MONSTER_INTERVAL) {
 		        int x = (int)(Math.random() * 450);
